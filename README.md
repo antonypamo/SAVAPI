@@ -165,6 +165,39 @@ All URIs are relative to *https://api.savant-rrf.com*
 Additional workflow examples for research labs are available in
 [docs/ResearchLabWorkflows.md](docs/ResearchLabWorkflows.md).
 
+### Local reranking quickstart
+
+Use the built-in reciprocal-rank-fusion helper when you want to combine
+multiple retrieval systems without making a network call. Provide the ranks
+for each candidate and the helper returns fused scores and feature details.
+
+```python
+from swagger_client.api.default_api import DefaultApi
+from swagger_client.models.rerank_candidate import RerankCandidate
+from swagger_client.models.rerank_request import RerankRequest
+
+api = DefaultApi()
+request = RerankRequest(
+    query="graphene superconductivity",
+    candidates=[
+        RerankCandidate(candidate_id="a", text="doc a", ranks={"bm25": 3, "dense": 1}),
+        RerankCandidate(candidate_id="b", text="doc b", ranks={"bm25": 1, "dense": 4}),
+    ],
+    k=60,      # optional RRF constant
+    top_n=1,   # optionally trim the returned list
+)
+
+response = api.rerank(request)
+for result in response.results:
+    print(result.candidate_id, result.score, result.features)
+```
+
+Run the example script with:
+
+```bash
+python examples/rerank_demo.py
+```
+
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
 *DefaultApi* | [**evaluate_quality**](docs/DefaultApi.md#evaluate_quality) | **POST** /v1/quality | Conceptual quality evaluation for LLM answers

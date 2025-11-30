@@ -100,6 +100,64 @@ except ApiException as e:
     print("Exception when calling DefaultApi->tutor_with_savant_rrf: %s\n" % e)
 ```
 
+## Quickstart (with bearer token)
+
+1. Export your bearer token so it is not hardcoded in code or notebooks:
+
+   ```bash
+   export SAVANT_API_TOKEN="<your_token_here>"
+   ```
+
+2. Run the included example to see quality evaluation and embedding calls:
+
+   ```bash
+   python examples/quality_demo.py
+   ```
+
+   The script will print Φ scores for each candidate answer and the embedding
+   dimension returned by the service. It also demonstrates how to enable
+   optional roles profiles and score normalization.
+
+### Client configuration tips
+
+```python
+import swagger_client
+
+configuration = swagger_client.Configuration()
+configuration.access_token = "${SAVANT_API_TOKEN}"  # or read from os.environ
+configuration.timeout = 20  # seconds
+# configuration.verify_ssl = False  # uncomment only for controlled testing
+
+api_client = swagger_client.ApiClient(configuration)
+api = swagger_client.DefaultApi(api_client)
+```
+
+*Use `timeout` to protect long-running calls, and leave `verify_ssl` enabled in
+production environments.*
+
+### Running asynchronous requests
+
+All API methods accept `async_req=True` for non-blocking calls:
+
+```python
+quality_request = swagger_client.QualityRequest(prompt="...", answers=[...])
+async_result = api.evaluate_quality(quality_request, async_req=True)
+response = async_result.get(timeout=30)  # waits for the result
+```
+
+### Testing and linting
+
+This client is generated code and ships without a full test suite. Recommended
+lightweight checks before committing changes:
+
+```bash
+python -m compileall swagger_client
+python -m pytest --maxfail=1 --disable-warnings -q
+```
+
+You can add `requests-mock` fixtures in `test/` to validate request payloads and
+response parsing without hitting the live API.
+
 ## Documentation for API Endpoints
 
 All URIs are relative to *https://api.savant-rrf.com*

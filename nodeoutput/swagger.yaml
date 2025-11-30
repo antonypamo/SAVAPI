@@ -1,0 +1,545 @@
+openapi: 3.0.3
+info:
+  title: Savant RRF API
+  description: |
+    Savant RRF v1.0 (Phi9_4) – Scientific tutoring, conceptual quality evaluation,
+    and icosahedral role profiling for STEM and RRF-related text.
+  version: "1"
+servers:
+- url: https://api.savant-rrf.com
+  description: Production server (example)
+- url: https://staging.api.savant-rrf.com
+  description: Staging server (example)
+security:
+- bearerAuth: []
+paths:
+  /v1/tutor:
+    post:
+      summary: Tutoring with Savant RRF (Phi9_4)
+      description: |
+        Generates a pedagogical answer to a scientific question and internally evaluates
+        its conceptual quality and icosahedral role profile using Savant RRF v1.0 (Phi9_4).
+      operationId: tutorWithSavantRRF
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TutorRequest"
+        required: true
+      responses:
+        "200":
+          description: Successful tutoring response with quality metrics.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TutorResponse"
+        "400":
+          description: Invalid request payload.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized – missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Rate limit exceeded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+      - bearerAuth: []
+  /v1/quality:
+    post:
+      summary: Conceptual quality evaluation for LLM answers
+      description: |
+        Evaluates one or more candidate answers to a prompt using Savant RRF metrics
+        (Φ, Ω, SRRF, CRRF, E_H) and a meta-classifier, optionally returning
+        their icosahedral role profiles and ranking.
+      operationId: evaluateQuality
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QualityRequest"
+        required: true
+      responses:
+        "200":
+          description: Quality evaluation result with ranked answers.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QualityResponse"
+        "400":
+          description: Invalid request payload.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized – missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Rate limit exceeded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+      - bearerAuth: []
+  /v1/roles_profile:
+    post:
+      summary: Icosahedral roles profile for a text
+      description: |
+        Computes the 12-dimensional icosahedral role distribution (physics, geometry,
+        information, ethics, etc.) for a given piece of text.
+      operationId: getRolesProfile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RolesProfileRequest"
+        required: true
+      responses:
+        "200":
+          description: Roles profile for the given text.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RolesProfileResponse"
+        "400":
+          description: Invalid request payload.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized – missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Rate limit exceeded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+      - bearerAuth: []
+  /v1/embed:
+    post:
+      summary: Text embeddings with RRFSAVANTMADE
+      description: |
+        Produces high-level conceptual embeddings using the RRFSAVANTMADE encoder
+        for scientific and RRF-related text.
+      operationId: getEmbeddings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmbedRequest"
+        required: true
+      responses:
+        "200":
+          description: Embeddings for input texts.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmbedResponse"
+        "400":
+          description: Invalid request payload.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized – missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Rate limit exceeded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+      - bearerAuth: []
+components:
+  schemas:
+    TutorRequest:
+      required:
+      - question
+      type: object
+      properties:
+        question:
+          type: string
+          description: Scientific or RRF-related question to be answered.
+        student_level:
+          type: string
+          description: Target level of the explanation.
+          default: undergrad
+          enum:
+          - highschool
+          - undergrad
+          - grad
+          - researcher
+        language:
+          type: string
+          description: Language code guiding the answer style.
+          example: en
+          default: en
+        max_new_tokens:
+          type: integer
+          description: Maximum number of tokens to generate for the answer.
+          example: 256
+          default: 256
+        include_roles_profile:
+          type: boolean
+          description: Whether to include the icosahedral roles profile in the response.
+          default: true
+        include_candidates:
+          type: boolean
+          description: Whether to include internal candidate answers and their metrics.
+          default: false
+        metadata:
+          type: object
+          additionalProperties: true
+          description: "Optional metadata for client-side tracking (session_id, user_id,\
+            \ etc)."
+    TutorResponse:
+      type: object
+      properties:
+        version:
+          type: string
+          example: savant-rrf-v1.0-phi9_4
+        question:
+          type: string
+        answer:
+          type: string
+        student_level:
+          type: string
+        language:
+          type: string
+        quality:
+          $ref: "#/components/schemas/SavantQualityMetrics"
+        roles_profile:
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/RolesProfile"
+        candidates:
+          type: array
+          description: Optional internal candidates and their quality metrics.
+          nullable: true
+          items:
+            $ref: "#/components/schemas/TutorResponse_candidates"
+        metadata:
+          type: object
+          additionalProperties: true
+    QualityRequest:
+      required:
+      - answers
+      - prompt
+      type: object
+      properties:
+        prompt:
+          type: string
+          description: Prompt or question that produced the candidate answers.
+        answers:
+          minItems: 1
+          type: array
+          description: Candidate answers to evaluate.
+          items:
+            $ref: "#/components/schemas/QualityAnswerInput"
+        include_roles_profile:
+          type: boolean
+          description: Whether to include roles profile for each answer.
+          default: true
+        return_top_k:
+          minimum: 1
+          type: integer
+          description: |
+            Number of top-ranked answers to return. If omitted, returns all answers sorted by score.
+        normalize_scores:
+          type: boolean
+          description: "Whether to include a normalized score in [0, 1]."
+          default: true
+    QualityAnswerInput:
+      required:
+      - id
+      - text
+      type: object
+      properties:
+        id:
+          type: string
+          description: Client-defined identifier for the candidate answer.
+        text:
+          type: string
+          description: Candidate answer text.
+        model:
+          type: string
+          description: Name of the model that produced this answer (for logging/debug).
+    QualityResponse:
+      type: object
+      properties:
+        version:
+          type: string
+          example: savant-rrf-v1.0-phi9_4
+        prompt:
+          type: string
+        ranked_answers:
+          type: array
+          description: Answers sorted by descending quality score.
+          items:
+            $ref: "#/components/schemas/QualityAnswerResult"
+        metadata:
+          $ref: "#/components/schemas/QualityResponse_metadata"
+    QualityAnswerResult:
+      type: object
+      properties:
+        id:
+          type: string
+        model:
+          type: string
+          nullable: true
+        text:
+          type: string
+        metrics:
+          allOf:
+          - $ref: "#/components/schemas/SavantQualityMetrics"
+          - type: object
+            properties:
+              score_normalized:
+                type: number
+                description: "Normalized quality score in [0, 1] if requested."
+                format: float
+                nullable: true
+        roles_profile:
+          nullable: true
+          allOf:
+          - $ref: "#/components/schemas/RolesProfile"
+    RolesProfileRequest:
+      required:
+      - text
+      type: object
+      properties:
+        text:
+          type: string
+          description: Text to analyze.
+        normalize:
+          type: boolean
+          description: Whether to apply softmax/normalization over roles.
+          default: true
+        return_full_vector:
+          type: boolean
+          description: Whether to return the full vector of role weights.
+          default: true
+    RolesProfileResponse:
+      type: object
+      properties:
+        version:
+          type: string
+          example: savant-rrf-v1.0-phi9_4
+        text_hash:
+          type: string
+          description: Optional hash of the input text for idempotency/debugging.
+        roles_profile:
+          $ref: "#/components/schemas/RolesProfile"
+        metadata:
+          $ref: "#/components/schemas/RolesProfileResponse_metadata"
+    EmbedRequest:
+      required:
+      - texts
+      type: object
+      properties:
+        texts:
+          minItems: 1
+          type: array
+          description: List of texts to embed.
+          items:
+            type: string
+        normalize_embeddings:
+          type: boolean
+          description: Whether to L2-normalize embeddings.
+          default: true
+        return_dim:
+          type: boolean
+          description: Whether to include the embedding dimension in the response.
+          default: true
+    EmbedResponse:
+      type: object
+      properties:
+        version:
+          type: string
+          example: savant-rrf-v1.0-phi9_4
+        model:
+          type: string
+          example: antonypamo/RRFSAVANTMADE
+        dimension:
+          type: integer
+          description: Embedding dimension if requested.
+          nullable: true
+        embeddings:
+          type: array
+          items:
+            $ref: "#/components/schemas/EmbedResponse_embeddings"
+    SavantQualityMetrics:
+      type: object
+      properties:
+        phi:
+          type: number
+          description: Φ – conceptual resonance score.
+          format: float
+        omega:
+          type: number
+          description: Ω – oscillatory/stability indicator.
+          format: float
+        SRRF:
+          type: number
+          description: Spectral RRF coherence metric.
+          format: float
+        CRRF:
+          type: number
+          description: Conceptual RRF coherence metric.
+          format: float
+        E_H:
+          type: number
+          description: Effective entropy / Harmony metric.
+          format: float
+        meta_score:
+          type: number
+          description: "Meta-classifier quality score (e.g., 0–1)."
+          format: float
+        label:
+          type: string
+          description: Discrete label derived from meta_score.
+          example: high_quality
+        explanation:
+          type: string
+          description: Human-readable explanation of the quality.
+      description: Savant RRF conceptual quality metrics.
+    RolesProfile:
+      type: object
+      properties:
+        roles:
+          type: array
+          example:
+          - physics
+          - geometry
+          - information
+          - ethics
+          - epistemology
+          - creativity
+          - symbolism
+          - entropy
+          - coherence
+          - musicality
+          - computation
+          - metacognition
+          items:
+            type: string
+        weights:
+          type: array
+          description: Relative weight of each role (often normalized to sum ~1).
+          items:
+            type: number
+            format: float
+        top_roles:
+          type: array
+          description: Top roles with highest weights.
+          items:
+            $ref: "#/components/schemas/RolesProfile_top_roles"
+      description: Icosahedral role distribution for a given text.
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          $ref: "#/components/schemas/ErrorResponse_error"
+    TutorResponse_candidates:
+      type: object
+      properties:
+        answer:
+          type: string
+        quality:
+          $ref: "#/components/schemas/SavantQualityMetrics"
+    QualityResponse_metadata:
+      type: object
+      properties:
+        total_answers:
+          type: integer
+        processing_time_ms:
+          type: integer
+      additionalProperties: true
+    RolesProfileResponse_metadata:
+      type: object
+      properties:
+        processing_time_ms:
+          type: integer
+      additionalProperties: true
+    EmbedResponse_embeddings:
+      type: object
+      properties:
+        index:
+          type: integer
+        embedding:
+          type: array
+          items:
+            type: number
+            format: float
+    RolesProfile_top_roles:
+      type: object
+      properties:
+        role:
+          type: string
+        weight:
+          type: number
+          format: float
+    ErrorResponse_error:
+      type: object
+      properties:
+        code:
+          type: string
+          example: INVALID_REQUEST
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: APIKey

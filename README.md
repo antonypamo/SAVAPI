@@ -162,6 +162,9 @@ response parsing without hitting the live API.
 
 All URIs are relative to *https://api.savant-rrf.com*
 
+Additional workflow examples for research labs are available in
+[docs/ResearchLabWorkflows.md](docs/ResearchLabWorkflows.md).
+
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
 *DefaultApi* | [**evaluate_quality**](docs/DefaultApi.md#evaluate_quality) | **POST** /v1/quality | Conceptual quality evaluation for LLM answers

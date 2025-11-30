@@ -17,6 +17,10 @@ import re  # noqa: F401
 # python 2 and python 3 compatibility library
 import six
 
+from swagger_client.models.rerank_result import RerankResult
+from swagger_client.models.rerank_response import RerankResponse
+from swagger_client.rrf_metrics import compute_rrf_features
+
 from swagger_client.api_client import ApiClient
 
 
@@ -427,3 +431,52 @@ class DefaultApi(object):
             _preload_content=params.get('_preload_content', True),
             _request_timeout=params.get('_request_timeout'),
             collection_formats=collection_formats)
+
+    def rerank(self, body, **kwargs):  # noqa: E501
+        """Local reranker using reciprocal rank fusion.  # noqa: E501
+
+        Computes fused RRF scores for the provided candidates without making a network call.  # noqa: E501
+        This method makes a synchronous computation only. Passing async_req=True will raise.  # noqa: E501
+
+        :param async_req bool
+        :param RerankRequest body: (required)
+        :return: RerankResponse
+                 If the method is called asynchronously,
+                 returns the request thread.
+        """
+        if kwargs.get('async_req'):
+            raise ValueError("`async_req` is not supported for the local reranker")
+
+        if body is None:
+            raise ValueError("Missing the required parameter `body` when calling `rerank`")
+        candidates = getattr(body, 'candidates', None)
+        if not candidates:
+            raise ValueError("`body.candidates` must contain at least one candidate")
+
+        k = getattr(body, 'k', None) or 60
+        top_n = getattr(body, 'top_n', None) or len(candidates)
+
+        scored_results = []
+        for idx, candidate in enumerate(candidates):
+            ranks = getattr(candidate, 'ranks', None) or {}
+            features = compute_rrf_features(ranks, k=k)
+            score = features['rrf_score']
+            scored_results.append(
+                RerankResult(
+                    candidate_id=candidate.candidate_id,
+                    text=candidate.text,
+                    score=score,
+                    rank=idx + 1,  # temporary placeholder, updated after sorting
+                    features=features,
+                )
+            )
+
+        scored_results.sort(key=lambda result: (-result.score, result.rank))
+        for rank_idx, result in enumerate(scored_results, start=1):
+            result.rank = rank_idx
+
+        return RerankResponse(
+            query=getattr(body, 'query', None),
+            k=k,
+            results=scored_results[:top_n],
+        )

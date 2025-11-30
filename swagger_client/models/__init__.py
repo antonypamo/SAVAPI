@@ -27,6 +27,10 @@ from swagger_client.models.quality_answer_result import QualityAnswerResult
 from swagger_client.models.quality_request import QualityRequest
 from swagger_client.models.quality_response import QualityResponse
 from swagger_client.models.quality_response_metadata import QualityResponseMetadata
+from swagger_client.models.rerank_candidate import RerankCandidate
+from swagger_client.models.rerank_request import RerankRequest
+from swagger_client.models.rerank_response import RerankResponse
+from swagger_client.models.rerank_result import RerankResult
 from swagger_client.models.roles_profile import RolesProfile
 from swagger_client.models.roles_profile_request import RolesProfileRequest
 from swagger_client.models.roles_profile_response import RolesProfileResponse
